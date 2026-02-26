@@ -1,0 +1,11 @@
+# Docker data volumes (if you mapped them to local folders)
+odoo-data/
+db-data/
+
+# Python leftovers
+__pycache__/
+*.pyc
+
+# OS specific
+.DS_Store
+Thumbs.db
