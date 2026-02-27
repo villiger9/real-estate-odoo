@@ -42,3 +42,18 @@ class estateProperty(models.Model):
         "res.users", string="Salesman", default=lambda self: self.env.user)
     tag_ids = fields.Many2many("estate.property.tag", string="Tags")
     offer_ids = fields.One2many("estate.property.offer", "property_id")
+    total_area = fields.Float(compute="_compute_area")
+    best_price = fields.Float(compute="_compute_best_price")
+
+    @api.depends('living_area', 'garden_area')
+    def _compute_area(self):
+        for a in self:
+            a.total_area = a.living_area + a.garden_area
+
+    @api.depends('offer_ids.price')
+    def _compute_best_price(self):
+        for record in self:
+            # use mapped() to get a list of prices, then max() to find the highest
+            # provide [0] as a default in case there are no offers yet
+            prices = record.offer_ids.mapped('price')
+            record.best_price = max(prices) if prices else 0.0
