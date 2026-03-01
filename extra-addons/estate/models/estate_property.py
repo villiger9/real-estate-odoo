@@ -1,6 +1,7 @@
-from odoo import fields, models, api
+from odoo import _, fields, models, api
 from odoo.tools import date_utils  # Import the Odoo helper
 from dateutil.relativedelta import relativedelta
+from odoo.exceptions import UserError, ValidationError
 
 
 class estateProperty(models.Model):
@@ -57,3 +58,29 @@ class estateProperty(models.Model):
             # provide [0] as a default in case there are no offers yet
             prices = record.offer_ids.mapped('price')
             record.best_price = max(prices) if prices else 0.0
+
+    @api.onchange('garden')
+    def _onchange_garden(self):
+        if self.garden:
+            self.garden_area = 10
+            self.garden_orientation = 'north'
+        else:
+            self.garden_area = 0
+            self.garden_orientation = False
+            return {'warning': {
+                'title': _("Warning"),
+                'message': ('This will reset orientation and area to 0')}}
+
+    def action_sell(self):
+        for record in self:
+            if record.state == 'cancelled':
+                raise UserError("can't sell a cancelled property!")
+            record.state = "sold"
+        return True
+
+    def action_cancel(self):
+        for record in self:
+            if record.state == 'sold':
+                raise UserError("can't cancel a sold property!")
+            record.state = "cancelled"
+        return True

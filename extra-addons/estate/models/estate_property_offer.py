@@ -1,5 +1,7 @@
 from odoo import fields, models, api
 from dateutil.relativedelta import relativedelta
+from odoo.tools import date_utils  # Import the Odoo helper
+from odoo.exceptions import UserError
 
 
 class estatePropertyOffer(models.Model):
@@ -20,14 +22,28 @@ class estatePropertyOffer(models.Model):
     @api.depends('validity', 'create_date')
     def _compute_deadline(self):
         for offer in self:
-            # if the record is new, create_date is False. use today's date instead
-            start_date = offer.create_date.date() if offer.create_date else fields.Date.today()
-            offer.date_deadline = start_date + \
+            # Fallback: if record isn't saved yet, use today's date
+            base_date = offer.create_date.date() if offer.create_date else fields.Date.today()
+            offer.date_deadline = base_date + \
                 relativedelta(days=offer.validity)
 
     def _inverse_deadline(self):
         for offer in self:
-            start_date = offer.create_date.date() if offer.create_date else fields.Date.today()
-            # subtract the dates to get a 'timedelta' object, then grab the .days
-            delta = offer.date_deadline - start_date
-            offer.validity = delta.days
+            base_date = offer.create_date.date() if offer.create_date else fields.Date.today()
+            # Calculate the difference between the set deadline and the start date
+            offer.validity = (offer.date_deadline - base_date).days
+
+    def action_accept(self):
+        for record in self:
+            if record.property_id.state in ['offer_accepted', 'sold', 'cancelled']:
+                raise UserError("can't accept offer!")
+
+            record.status = "accepted"
+            record.property_id.state = "offer_accepted"
+            record.property_id.selling_price = record.price
+        return True
+
+    def action_refuse(self):
+        for record in self:
+            record.status = "refused"
+        return True

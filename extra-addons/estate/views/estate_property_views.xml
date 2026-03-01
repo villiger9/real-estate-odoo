@@ -35,10 +35,13 @@
                             <field name="name"/>
                         </h1>
                         <field name="tag_ids" widget="many2many_tags"/>
+                        <button name="action_sell" type="object" string="SOLD"/>
+                        <button name="action_cancel" type="object" string="CANCELLED"/>
                     </group>
                     <separator />
                     <group>
                         <group>
+                            <field name="state"/>
                             <field name="property_type_id"/>
                             <field name="postcode"/>
                             <field name="date_availability" string="Available From"/>
