@@ -96,6 +96,13 @@ class estateProperty(models.Model):
                         "The selling price cannot be lower than 90% of the expected price!"
                     )
 
+    @api.ondelete(at_uninstall=False)
+    def _check_state_before_deletion(self):
+        for record in self:
+            if record.state not in ['new', 'cancelled']:
+                raise UserError(
+                    "You cannot delete a property that is not 'New' or 'Cancelled'!")
+
     _sql_constraints = [
         ('check_expected_price', 'CHECK(expected_price > 0)',
          'The expected price must be strictly positive.'),

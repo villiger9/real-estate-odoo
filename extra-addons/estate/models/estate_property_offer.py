@@ -19,6 +19,8 @@ class estatePropertyOffer(models.Model):
     validity = fields.Integer(default=7)
     date_deadline = fields.Date(
         compute="_compute_deadline", inverse="_inverse_deadline")
+    property_type_id = fields.Many2one(
+        related="property_id.property_type_id", stored=True)
 
     @api.depends('validity', 'create_date')
     def _compute_deadline(self):
@@ -48,6 +50,17 @@ class estatePropertyOffer(models.Model):
         for record in self:
             record.status = "refused"
         return True
+
+    @api.model
+    def create(self, vals):
+        prop = self.env['estate.property'].browse(vals['property_id'])
+        if prop.offer_ids:
+            max_offer = max(prop.offer_ids.mapped('price'))
+            if vals.get('price') < max_offer:
+                raise UserError(f"The offer must be at least {max_offer:.2f}!")
+
+        prop.state = 'offer_received'
+        return super().create(vals)
 
     _sql_constraints = [
         ('estate_property_offer_check_price', 'CHECK(price > 0)',
