@@ -1,4 +1,4 @@
-from odoo import fields, models
+from odoo import fields, models, Command
 import logging
 _logger = logging.getLogger(__name__)
 
@@ -19,14 +19,13 @@ class EstatePropertyAccount(models.Model):
                 'partner_id': record.buyer_id.id,
                 'move_type': 'out_invoice',       # Tell Odoo it's a 'Customer Invoice'
                 'invoice_line_ids': [
-                    # Line 1: The 6% Commission
-                    (0, 0, {
+                    # Command.create replaces (0, 0, {values})
+                    Command.create({
                         'name': record.name,
                         'quantity': 1.0,
                         'price_unit': record.selling_price * 0.06,
                     }),
-                    # Line 2: The Fixed Admin Fee
-                    (0, 0, {
+                    Command.create({
                         'name': 'Administrative fees',
                         'quantity': 1.0,
                         'price_unit': 100.00,
