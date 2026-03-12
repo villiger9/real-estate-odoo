@@ -1,4 +1,4 @@
-# Docker data volumes (if you mapped them to local folders)
+# Docker data volumes (if mapped to local folders)
 odoo-data/
 db-data/
 
